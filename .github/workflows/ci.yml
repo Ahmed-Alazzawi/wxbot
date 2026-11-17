@@ -1,0 +1,47 @@
+# Runs on every push and pull request:
+#   1. "test" checks the types and runs the full test suite.
+#   2. "deploy" publishes to Cloudflare, but only for pushes to main and only
+#      if the tests passed. Broken code never reaches the live bot.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# If two pushes land close together, finish the first deploy before starting the next.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  test:
+    name: Typecheck and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+
+  deploy:
+    name: Deploy to Cloudflare
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx wrangler deploy
+        env:
+          # Set these under the repository's Settings > Secrets and variables > Actions.
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

@@ -1,0 +1,19 @@
+{
+  // Cloudflare Worker settings. "name" becomes part of your bot's web address.
+  "name": "wxbot",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-11-01",
+  "observability": { "enabled": true },
+
+  // Runs the alert check every 5 minutes.
+  "triggers": { "crons": ["*/5 * * * *"] },
+
+  // The D1 database that stores alert subscriptions. In the code it is "env.DB".
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "wxbot",
+      "database_id": "cb68ae8e-79f6-41d4-82a6-5b90b62f34a2"
+    }
+  ]
+}
